@@ -1,4 +1,5 @@
-## 镜像（images）
+## 镜像（image）
+---
 标准写法：`IMAGE:TAG` 略写：`IMAGE`
 
 检索：`docker search`
@@ -21,13 +22,25 @@
 
 
 ## 容器（container）
+--- 
+创建容器先思考以下问题：
+- 网络：是否需要暴露一些端口让外界访问，使用`-d`或`--network`
+- 存储：是否需要挂载配置文件到外部，进行数据持久化，使用`-v`进行目录挂载或卷映射
+- 环境变量：是否需要在容器启动时传入环境变量进行初始配置，使用`-e`
+- 具体需要参考[DockerHub官网](https://hub.docker.com/)
+
+
+
 运行：`docker run [OPTIONS] IMAGE`
   Options:
     `-d` detach 分离 即后台运行
     `--name 容器名称` 如果不指定名称，系统自动命名
     `-p 服务器主机的端口：容器的端口` port 端口 访问服务器主机的端口等于访问容器的端口，即端口映射
-    `--network 自定义网络` 需提前创建自定义网络 ^dfe694
-
+    `--network 自定义网络` 需提前创建自定义网络
+    `--restart always` 服务器开机，容器自动启动
+    `-e` 环境变量，具体参考[DockerHub官网](https://hub.docker.com/)
+    `-v` 存储挂载
+    
 查看：`docker ps [-a]` 查看所有 => `-a`
 停止：`docker stop ID/NAMES`
 启动：`docker start ID/NAMES`
@@ -38,7 +51,9 @@
 删除：`docker rm [-f] ID/NAMES` 强制删除 => `-f`
 检查：`docker [container] inspect ID/NAMES` 用于查看容器状况 
 
-## 存储
+
+## 存储（volume）
+---
 目录挂载：`docker run -v 外部目录:容器目录` 以nginx为例： `-v /app/nginx_html:/usr/share/nginx/html`
 卷映射：`docker run -v 卷名:容器目录` 以nginx为例： `-v nginx:/etc/nginx` 卷名不以`./`或`/`开头
 ！可同时进行两种存储方式，二者都可实现数据同步
@@ -54,7 +69,9 @@
 查看卷：`docker volume ls`
 创建卷：`docker volume create VOLUME NAME`
 
-## 网络
+
+## 网络（network）
+---
 容器IP访问方法：
 - 进入容器控制台：`docker exec -it ID/NAMES bash` 
 - 访问某个容器：`curl http://容器IP:容器端口`
@@ -102,4 +119,68 @@ docker run -d -p 6380:6379
 -e REDIS_PASSWORD=123456 
 --network mynet --name redis2 
 bitnami/redis
+```
+
+
+## [Docker Compose](https://docs.docker.com/reference/compose-file/)
+---
+Docker Compose => 用于批量管理容器的工具，可以快速启动指定容器并完成匹配
+文件名：`compose.yaml`
+
+上线：`docker compose up -d` 用于第一次创建并启动应用
+下线：`docker compose down`
+启动：`docker compose start x1 x2 x3` x1、x2、x3指的是compose.yaml文件里已经启动过的容器
+停止：`docker compose stop x1 x2` 
+扩容：`docker compose scale x1=3` 创建3个x1容器
+
+`compose.yaml`
+包含顶级元素（top-level elements）
+- `name` ：名字
+- `services` ：服务
+- `networks` ：网络
+- `volumes` ：卷
+- `configs` ：配置
+- `secrets` ：密钥
+```
+# compose.yaml
+name: myblog
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=wordpress
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - /app/myconf:/etc/mysql/conf.d
+    restart: always
+    networks:
+      - blog
+
+  wordpress:
+    image: wordpress
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: 123456
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress:/var/www/html
+    restart: always
+    networks:
+      - blog
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
+  wordpress:
+
+networks:
+  blog:
 ```
