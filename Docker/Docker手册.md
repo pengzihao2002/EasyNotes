@@ -22,7 +22,7 @@
 
 
 ## 容器（container）
---- 
+---
 创建容器先思考以下问题：
 - 网络：是否需要暴露一些端口让外界访问，使用`-d`或`--network`
 - 存储：是否需要挂载配置文件到外部，进行数据持久化，使用`-v`进行目录挂载或卷映射
@@ -133,7 +133,7 @@ Docker Compose => 用于批量管理容器的工具，可以快速启动指定�
 停止：`docker compose stop x1 x2` 
 扩容：`docker compose scale x1=3` 创建3个x1容器
 
-`compose.yaml`
+`compose.yaml`文件
 包含顶级元素（top-level elements）
 - `name` ：名字
 - `services` ：服务
